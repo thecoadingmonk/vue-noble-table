@@ -1,7 +1,6 @@
 export interface Column {
   key: string
   title: string
-  colspan?: number
   scope?: 'col' | 'row'
   width?: number
   searchable?: boolean
@@ -12,7 +11,7 @@ export interface Column {
 }
 
 export interface Row {
-  [key: string]: string
+  [key: string]: string | number | string[]
 }
 
 export interface ColumnGroup {

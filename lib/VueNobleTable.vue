@@ -20,12 +20,14 @@
     
     <tbody>
       <tr v-for="(row, index) in rows" :key="index">
-        <td v-for="(col, i) in columns" :key="i">
+        <td v-for="(col, i) in columns" :key="col.key + i">
             <slot :name="col.key" :row="row">
               {{ row[col.key] }}
             </slot>
         </td>
       </tr>
+
+      <div v-if="!rows.length">No data</div>
     </tbody>
 
     <tfoot>
@@ -36,7 +38,7 @@
 
 <script lang="ts">
 import { defineComponent, PropType } from 'vue'
-import { Column, ColumnGroup, Row } from './TablePropTypes';
+import { Column, ColumnGroup, Row } from './VueNobleTablePropTypes';
 
 export default defineComponent({
   name: 'VueNobleTable',
