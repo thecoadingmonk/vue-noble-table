@@ -1,7 +1,8 @@
 <script lang="ts">
 import { defineComponent, ref } from 'vue';
 import VueNobleTable from '../lib/VueNobleTable.vue'
-import { Column, Row, ColumnGroup } from '../lib/TablePropTypes';
+import { Column, Row, ColumnGroup } from '../lib/VueNobleTablePropTypes';
+import ProductList from './mock-data/ProductList.json';
 
 export default defineComponent({
   name: 'App',
@@ -11,42 +12,47 @@ export default defineComponent({
   setup() {
     const columns = ref<Column[]>([
     {
-      key: 'name',
-      title: 'Name',
+      key: 'id',
+      title: 'ID',
     },
     {
-      key: 'hex',
-      title: 'HEX',
+      key: 'title',
+      title: 'Title',
     },
     {
-      key: 'hsla',
-      title: 'HSLa'
+      key: 'description',
+      title: 'Description'
     },
     {
-      key: 'rgba',
-      title: 'RGBa',
-      colspan: 2
+      key: 'price',
+      title: 'Price',
+    },
+    {
+      key: 'discountPercentage',
+      title: 'Discount Percentage',
+    },
+    {
+      key: 'rating',
+      title: 'Rating',
+    },
+    {
+      key: 'stock',
+      title: 'Stock',
+    },
+    {
+      key: 'brand',
+      title: 'Brand',
+    },
+    {
+      key: 'category',
+      title: 'Category',
+    },
+    {
+      key: 'thumbnail',
+      title: 'Thumbnail'
     }
   ]);
-    const rows = ref<Row[]>([
-      {
-        name: 'Teal',
-        hex: '#51F6F6',
-        hsla: 'hsl(180 90% 64% / 1)',
-        rgba: 'rgb(81 246 246 / 1)',
-      },
-      {
-        name: 'Goldenrod',
-        hex: '#51F6F6',
-        hsla: 'hsl(180 90% 64% / 1)',
-        rgba: 'rgb(81 246 246 / 1)',
-      },
-      {
-        hex: '#51F6F6',
-        hsla: 'hsl(180 90% 64% / 1)',
-        rgba: 'rgb(81 246 246 / 1)',
-      }
-    ])
+    const rows = ref<Row[]>(ProductList.products);
     const columnGroups = ref<ColumnGroup[]>([
       {
         title: 'Main header',
@@ -82,6 +88,5 @@ export default defineComponent({
   align-items: center;
   justify-content: center;
   width: 100%;
-  height: 100vh;
 }
 </style>
