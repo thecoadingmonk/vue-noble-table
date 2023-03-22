@@ -11,7 +11,7 @@ export interface Column {
 }
 
 export interface Row {
-  [key: string]: string | number | string[]
+  [key: string]: string | number
 }
 
 export interface ColumnGroup {
@@ -19,4 +19,9 @@ export interface ColumnGroup {
   order: number
   colspan?: number
   scope?: 'col' | 'row'
+}
+
+export interface SortConfig {
+    direction?: 'asc' | 'desc'
+    key: string
 }

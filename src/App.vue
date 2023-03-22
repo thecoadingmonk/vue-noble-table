@@ -14,42 +14,52 @@ export default defineComponent({
     {
       key: 'id',
       title: 'ID',
+      sortable: true,
     },
     {
       key: 'title',
       title: 'Title',
+      sortable: true,
     },
     {
       key: 'description',
-      title: 'Description'
+      title: 'Description',
+      sortable: true,
     },
     {
       key: 'price',
       title: 'Price',
+      sortable: true,
     },
     {
       key: 'discountPercentage',
       title: 'Discount Percentage',
+      sortable: true,
     },
     {
       key: 'rating',
       title: 'Rating',
+      sortable: true,
     },
     {
       key: 'stock',
       title: 'Stock',
+      sortable: true,
     },
     {
       key: 'brand',
       title: 'Brand',
+      sortable: true,
     },
     {
       key: 'category',
       title: 'Category',
+      sortable: true,
     },
     {
       key: 'thumbnail',
-      title: 'Thumbnail'
+      title: 'Thumbnail',
+      sortable: true,
     }
   ]);
     const rows = ref<Row[]>(ProductList.products);
