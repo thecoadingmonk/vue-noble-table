@@ -138,22 +138,24 @@ export default defineComponent({
       }
     },
     sortMethodWithDirectionMultiColumn(sortArray: SortConfig[]) {
-      const sortMethodAsc = (a: string | number, b: string | number) => {
+      const sortMethodAsc = (a: string | number, b: string | number, column?: Column) => {
+        if (column && typeof column.sortable === 'function') {
+          return column.sortable(a, b);
+        }
+        
         return a === b ? 0 : a > b ? 1 : -1;
       }
       
-      const sortMethodWithDirection = (direction: SortConfig['direction']) => { 
+      const sortMethodWithDirection = (direction: SortConfig['direction'], column?: Column) => { 
         if (direction === undefined || direction == "asc") {
-            return sortMethodAsc;
-        } else {
-            return (a: string | number, b: string | number) => {
-                return -sortMethodAsc(a, b);
-            } 
+          return (a: string | number, b: string | number) => sortMethodAsc(a, b, column);
         }
+
+        return (a: string | number, b: string | number) => -sortMethodAsc(a, b, column); 
       }
 
       const sortMethodWithDirectionByColumn = (columnName: string, direction: SortConfig['direction']) => {   
-        const sortMethod = sortMethodWithDirection(direction)
+        const sortMethod = sortMethodWithDirection(direction, this.columns.find((each: Column) => each.key === columnName))
 
         return (a: Row, b: Row) => {
             return sortMethod(a[columnName], b[columnName]);

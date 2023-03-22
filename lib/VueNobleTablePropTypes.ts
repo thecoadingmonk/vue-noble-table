@@ -5,7 +5,7 @@ export interface Column {
   width?: number
   searchable?: boolean
   exportable?: boolean
-  sortable?: boolean
+  sortable?: boolean | ((a: string | number, b: string | number) => 1 | -1 | 0)
   align?: 'left' | 'right' | 'center'
   valueFormatter?(row: Row): string
 }

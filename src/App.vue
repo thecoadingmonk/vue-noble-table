@@ -29,7 +29,7 @@ export default defineComponent({
     {
       key: 'price',
       title: 'Price',
-      sortable: true,
+      sortable: (a:string | number, b: string | number) => a === b ? 0 : a > b ? 1 : -1,
     },
     {
       key: 'discountPercentage',
@@ -59,7 +59,7 @@ export default defineComponent({
     {
       key: 'thumbnail',
       title: 'Thumbnail',
-      sortable: true,
+      sortable: (a:string | number, b: string | number) => a === b ? 0 : a > b ? 1 : -1,
     }
   ]);
     const rows = ref<Row[]>(ProductList.products);
