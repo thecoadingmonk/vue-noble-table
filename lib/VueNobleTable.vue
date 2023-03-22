@@ -12,10 +12,17 @@
       </tr>
 
       <tr>
-        <th v-for="column in columns" :key="column.key" :scope="column.scope || 'col'" @click.exact="setSortConfig(column, 'single')" @click.shift="setSortConfig(column, 'multiple')">
-          {{ column.title }}
+        <th 
+          v-for="column in columns"
+          :key="column.key" 
+          :scope="column.scope || 'col'" 
+          :class="{'cursor-pointer': column.sortable}"
+          @click.exact="setSortConfig(column, 'single')" 
+          @click.shift="setSortConfig(column, 'multiple')"
+          >
+            {{ column.title }}
 
-          <svg v-if="!!sortConfig.find(i => i.key === column.key)" width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg" :class="{'sort-up': !!sortConfig.find(i => i.key === column.key && i.direction === 'desc') }">
+          <svg v-if="!!getSortConfig(column)" width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg" :class="{'sort-up': getSortConfig(column)?.direction === 'desc' }">
             <path d="M7 10L1.80385 4L12.1962 4L7 10Z" fill="#5D6B7C"/>
           </svg>            
         </th>
@@ -82,7 +89,7 @@ export default defineComponent({
     },
     displayableRow() {
       if(this.sortConfig.length ) {
-        const sortMethod = this.sortMethodWithDirectionMultiColumn(this.sortConfig);
+        const sortMethod = this.sortData(this.sortConfig);
         const clonedRows = [...this.rows];
         
         return clonedRows.sort(sortMethod);
@@ -137,12 +144,12 @@ export default defineComponent({
         }
       }
     },
-    sortMethodWithDirectionMultiColumn(sortArray: SortConfig[]) {
+    sortData(sortArray: SortConfig[]) {
       const sortMethodAsc = (a: string | number, b: string | number, column?: Column) => {
         if (column && typeof column.sortable === 'function') {
           return column.sortable(a, b);
         }
-        
+
         return a === b ? 0 : a > b ? 1 : -1;
       }
       
@@ -174,6 +181,13 @@ export default defineComponent({
 
           return sorted;
       }
+    },
+    getSortConfig(column: Column): SortConfig | undefined {
+      if(!this.sortConfig.length) {
+        return undefined
+      }
+
+      return this.sortConfig.find((i: SortConfig) => i.key === column.key)
     }
   }
 })
@@ -190,4 +204,9 @@ td {
 .sort-up {
   transform: rotate(180deg);
 }
+
+.cursor-pointer {
+  cursor: pointer;
+}
+
 </style>
