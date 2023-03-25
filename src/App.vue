@@ -82,13 +82,26 @@ export default defineComponent({
   ])
 
     return { columns, rows, columnGroups }
+  },
+  methods: {
+    loadMore(data) {
+      console.log(data);
+      return new Promise(res => {
+        setTimeout(() => res( data.cursor <= 30 ? this.rows : []), 10000)
+      })
+    }
   }
 })
 </script>
 
 <template>
   <div class="table-container">
-    <VueNobleTable :columns="columns" :rows="rows" :column-groups="columnGroups" />
+    <VueNobleTable 
+      :columns="columns" 
+      :rows="rows" 
+      :column-groups="columnGroups" 
+      :load-more="loadMore"
+    />
   </div>
 </template>
 

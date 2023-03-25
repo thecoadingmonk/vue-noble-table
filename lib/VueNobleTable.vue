@@ -44,10 +44,11 @@
 
       <tfoot>
         <p>Table footer</p>
+        <p v-if="isLoading || localLoadingState">Loading...</p>
       </tfoot>
     </table> 
 
-    <div class="pagination-container">
+    <div v-if="pagination.enable" class="pagination-container">
       <div>
         <span>display</span>
         <select v-model="recordsPerPage">
@@ -61,7 +62,7 @@
           <option v-for="num in totalPages" :key="num" :value="num">{{ num }}</option>
         </select>
         <span> of {{totalPages}}</span>
-        
+
         <button :disabled="currentPage === 1" @click="goToPage('prev')">prev</button>
         <button :disabled="currentPage === totalPages" @click="goToPage('next')">next</button>
       </div>
@@ -71,7 +72,7 @@
 
 <script lang="ts">
 import { defineComponent, PropType, ref } from 'vue'
-import { Column, ColumnGroup, Pagination, Row, SortConfig } from './VueNobleTablePropTypes';
+import { Column, ColumnGroup, Events, Pagination, Row, SortConfig } from './VueNobleTablePropTypes';
 
 const defaultPager = [10, 15, 25, 50, 100];
 
@@ -95,8 +96,16 @@ export default defineComponent({
       default: () => ({
         enable: true,
         pager: defaultPager,
-        defaultActivePage: 1
-      })
+        defaultActivePage: 1,
+      } as Pagination)
+    },
+    isLoading: {
+      type: Boolean,
+      default: false,
+    },
+    loadMore: {
+      type: Function as PropType<Events['loadMore']>,
+      default: undefined,
     }
   },
   setup(props) {
@@ -104,8 +113,10 @@ export default defineComponent({
     const pager = ref<Array<number>>(props.pagination.pager || defaultPager);
     const recordsPerPage = ref<number>(pager.value[0]);
     const currentPage = ref<number>(props.pagination.defaultActivePage || 1)
+    const clonedRows = ref<Row[]>(Array.from(props.rows));
+    const localLoadingState = ref<Boolean>(false);
 
-    return { sortConfig, pager, recordsPerPage, currentPage };
+    return { sortConfig, pager, recordsPerPage, currentPage, clonedRows, localLoadingState };
   },
   watch: {
     recordsPerPage(newCount, oldCount) {
@@ -131,21 +142,21 @@ export default defineComponent({
       return [];
     },
     displayableRow() {
-      const clonedRows = Array.from(this.rows);
-
       if(this.sortConfig.length ) {
         const sortMethod = this.sortData(this.sortConfig);
         
-        return clonedRows.sort(sortMethod);
+        return this.clonedRows.sort(sortMethod);
       }
 
-      return clonedRows;
+      return this.clonedRows;
     },
     currentPageData() {
       if (this.pagination && this.pagination.enable) {
         const start = this.recordsPerPage * (this.currentPage - 1);
         const end = start + this.recordsPerPage;
-        
+
+        this.loadFromServer();
+
         return this.displayableRow.slice(start, end);
       }
 
@@ -254,8 +265,32 @@ export default defineComponent({
         this.currentPage -= 1;
       } else if (page === 'next' && this.currentPage < this.totalPages) {
         this.currentPage += 1;
+        this.loadFromServer();
       }
     },
+    async loadFromServer() {
+      if(this.loadMore && this.currentPage === this.totalPages) {
+        this.localLoadingState = true;
+
+        try {
+          const response: Row[] = await this.loadMore({
+            count: this.recordsPerPage, 
+            previous: this.currentPage - 1, 
+            current: this.currentPage, 
+            next: this.currentPage + 1,
+            cursor: this.recordsPerPage * this.totalPages,
+          })
+
+          if (response.length) {
+            this.clonedRows = this.clonedRows.concat(response);
+          }
+        } catch(e) {
+          console.log(e)
+        } finally {
+          this.localLoadingState = false
+        }
+      }
+    }
   }
 })
 </script>

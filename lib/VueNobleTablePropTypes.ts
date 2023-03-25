@@ -31,3 +31,19 @@ export interface Pagination {
   defaultActivePage?: number
   pager?: Array<number>
 }
+
+export interface Events {
+  loadMore?: (
+    { 
+      count, 
+      previous, 
+      current, 
+      next, 
+      cursor 
+    }: {
+      count: number, 
+      previous: number, 
+      current: number, 
+      next: number, 
+      cursor: number}) => Promise<Row[]>
+}
