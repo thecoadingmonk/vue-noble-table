@@ -144,8 +144,9 @@ export default defineComponent({
     displayableRow() {
       if(this.sortConfig.length ) {
         const sortMethod = this.sortData(this.sortConfig);
-        
-        return this.clonedRows.sort(sortMethod);
+        const duplicateRows = Array.from(this.clonedRows);
+
+        return duplicateRows.sort(sortMethod);
       }
 
       return this.clonedRows;
