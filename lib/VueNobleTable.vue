@@ -1,55 +1,79 @@
 <template>
-  <table>
-    <caption>
-      Color names and values
-    </caption>
-    
-    <thead>
-      <tr v-for="(group, index) in orderedColumnGroup" :key="index">
-        <th v-for="col in group" :key="col.order" :scope="col.scope || 'col'" :colspan="col.colspan || 1">
-          {{ col.title}}
-        </th>
-      </tr>
+  <div>
+    <table>
+      <caption>
+        Color names and values
+      </caption>
+      
+      <thead>
+        <tr v-for="(group, index) in orderedColumnGroup" :key="index">
+          <th v-for="col in group" :key="col.order" :scope="col.scope || 'col'" :colspan="col.colspan || 1">
+            {{ col.title}}
+          </th>
+        </tr>
 
-      <tr>
-        <th 
-          v-for="column in columns"
-          :key="column.key" 
-          :scope="column.scope || 'col'" 
-          :class="{'cursor-pointer': column.sortable}"
-          @click.exact="setSortConfig(column, 'single')" 
-          @click.shift="setSortConfig(column, 'multiple')"
-          >
-            {{ column.title }}
+        <tr>
+          <th 
+            v-for="column in columns"
+            :key="column.key" 
+            :scope="column.scope || 'col'" 
+            :class="{'cursor-pointer': column.sortable}"
+            @click.exact="setSortConfig(column, 'single')" 
+            @click.shift="setSortConfig(column, 'multiple')"
+            >
+              {{ column.title }}
 
-          <svg v-if="!!getSortConfig(column)" width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg" :class="{'sort-up': getSortConfig(column)?.direction === 'desc' }">
-            <path d="M7 10L1.80385 4L12.1962 4L7 10Z" fill="#5D6B7C"/>
-          </svg>            
-        </th>
-      </tr>
-    </thead>
-    
-    <tbody>
-      <tr v-for="(row, index) in displayableRow" :key="index">
-        <td v-for="(col, i) in columns" :key="col.key + i">
-            <slot :name="col.key" :row="row">
-              {{ row[col.key] }}
-            </slot>
-        </td>
-      </tr>
+            <svg v-if="!!getSortConfig(column)" width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg" :class="{'sort-up': getSortConfig(column)?.direction === 'desc' }">
+              <path d="M7 10L1.80385 4L12.1962 4L7 10Z" fill="#5D6B7C"/>
+            </svg>            
+          </th>
+        </tr>
+      </thead>
+      
+      <tbody>
+        <tr v-for="(row, index) in currentPageData" :key="index">
+          <td v-for="(col, i) in columns" :key="col.key + i">
+              <slot :name="col.key" :row="row">
+                {{ row[col.key] }}
+              </slot>
+          </td>
+        </tr>
 
-      <div v-if="!rows.length">No data</div>
-    </tbody>
+        <div v-if="!rows.length">No data</div>
+      </tbody>
 
-    <tfoot>
-      <p>Table footer</p>
-    </tfoot>
-  </table>  
+      <tfoot>
+        <p>Table footer</p>
+      </tfoot>
+    </table> 
+
+    <div class="pagination-container">
+      <div>
+        <span>display</span>
+        <select v-model="recordsPerPage">
+          <option v-for="(record, key) in pager" :key="key" :value="record">{{ record }}</option>
+        </select>
+        <span>per page</span>
+      </div>
+      <div>
+        <span>page</span>
+        <select v-model="currentPage" class="select-current-page">
+          <option v-for="num in totalPages" :key="num" :value="num">{{ num }}</option>
+        </select>
+        <span> of {{totalPages}}</span>
+        
+        <button :disabled="currentPage === 1" @click="goToPage('prev')">prev</button>
+        <button :disabled="currentPage === totalPages" @click="goToPage('next')">next</button>
+      </div>
+    </div> 
+  </div>
 </template>
 
 <script lang="ts">
 import { defineComponent, PropType, ref } from 'vue'
-import { Column, ColumnGroup, Row, SortConfig } from './VueNobleTablePropTypes';
+import { Column, ColumnGroup, Pagination, Row, SortConfig } from './VueNobleTablePropTypes';
+
+const defaultPager = [10, 15, 25, 50, 100];
 
 export default defineComponent({
   name: 'VueNobleTable',
@@ -66,11 +90,30 @@ export default defineComponent({
       type: Array as PropType<ColumnGroup[]>,
       default: [] as ColumnGroup[]
     },
+    pagination: {
+      type: Object as PropType<Pagination>,
+      default: () => ({
+        enable: true,
+        pager: defaultPager,
+        defaultActivePage: 1
+      })
+    }
   },
-  setup() {
+  setup(props) {
     const sortConfig = ref<SortConfig[]>([])
+    const pager = ref<Array<number>>(props.pagination.pager || defaultPager);
+    const recordsPerPage = ref<number>(pager.value[0]);
+    const currentPage = ref<number>(props.pagination.defaultActivePage || 1)
 
-    return { sortConfig };
+    return { sortConfig, pager, recordsPerPage, currentPage };
+  },
+  watch: {
+    recordsPerPage(newCount, oldCount) {
+      // Updating the currentPage except the initial change
+      if (oldCount !== 1) {
+        this.resetPagination();
+      }
+    },
   },
   computed: {
     orderedColumnGroup():Array<ColumnGroup[]>  {
@@ -88,15 +131,29 @@ export default defineComponent({
       return [];
     },
     displayableRow() {
+      const clonedRows = Array.from(this.rows);
+
       if(this.sortConfig.length ) {
         const sortMethod = this.sortData(this.sortConfig);
-        const clonedRows = [...this.rows];
         
         return clonedRows.sort(sortMethod);
       }
 
-      return this.rows;
-    }
+      return clonedRows;
+    },
+    currentPageData() {
+      if (this.pagination && this.pagination.enable) {
+        const start = this.recordsPerPage * (this.currentPage - 1);
+        const end = start + this.recordsPerPage;
+        
+        return this.displayableRow.slice(start, end);
+      }
+
+      return this.displayableRow;
+    },
+    totalPages() {
+      return Math.ceil(this.displayableRow.length / this.recordsPerPage);
+    },
   },
   methods: {
     setSortConfig(column: Column, type: 'multiple' | 'single') {
@@ -188,7 +245,17 @@ export default defineComponent({
       }
 
       return this.sortConfig.find((i: SortConfig) => i.key === column.key)
-    }
+    },
+     resetPagination() {
+      this.currentPage = 1;
+    },
+    goToPage(page: 'prev' | 'next') {
+      if (page === 'prev' && this.currentPage > 1) {
+        this.currentPage -= 1;
+      } else if (page === 'next' && this.currentPage < this.totalPages) {
+        this.currentPage += 1;
+      }
+    },
   }
 })
 </script>
@@ -207,6 +274,11 @@ td {
 
 .cursor-pointer {
   cursor: pointer;
+}
+
+.pagination-container {
+  display: flex;
+  justify-content: space-between;
 }
 
 </style>

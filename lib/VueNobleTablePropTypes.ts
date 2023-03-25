@@ -25,3 +25,9 @@ export interface SortConfig {
     direction?: 'asc' | 'desc'
     key: string
 }
+
+export interface Pagination {
+  enable: boolean
+  defaultActivePage?: number
+  pager?: Array<number>
+}
