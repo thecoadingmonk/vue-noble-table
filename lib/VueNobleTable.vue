@@ -1,6 +1,10 @@
 <template>
   <div>
-    <table>
+    <div v-if="tableConfig.download?.enable">
+      <button @click="exportFile">Download</button>
+    </div>
+
+    <table :id="id">
       <caption>
         Color names and values
       </caption>
@@ -72,13 +76,17 @@
 
 <script lang="ts">
 import { defineComponent, PropType, ref } from 'vue'
-import { Column, ColumnGroup, Events, Pagination, Row, SortConfig } from './VueNobleTablePropTypes';
+import { Column, ColumnGroup, Events, Pagination, Row, SortConfig, TableConfig } from './VueNobleTablePropTypes';
 
 const defaultPager = [10, 15, 25, 50, 100];
 
 export default defineComponent({
   name: 'VueNobleTable',
   props: {
+    id: {
+      type: String,
+      required: true,
+    },
     columns: {
       type: Array as PropType<Column[]>,
       required: true
@@ -106,7 +114,17 @@ export default defineComponent({
     loadMore: {
       type: Function as PropType<Events['loadMore']>,
       default: undefined,
-    }
+    },
+    tableConfig: {
+      type: Object as PropType<TableConfig>,
+      default: () => ({
+        download: {
+          enable: true,
+          fileType: 'csv',
+          fileName: 'download'
+        }
+      } as TableConfig)
+    },
   },
   setup(props) {
     const sortConfig = ref<SortConfig[]>([])
@@ -290,6 +308,73 @@ export default defineComponent({
           this.localLoadingState = false
         }
       }
+    },
+    toCsv() {
+      const exportableColumns = this.columns.filter((each: Column) => each.exportable !== false && each)
+
+      const preparedRows = this.clonedRows.map((row: Row) => {
+        const textArray: String[] = [];
+        
+        exportableColumns.forEach((col: Column) => {
+          if(col.valueFormatter) {
+            textArray.push(col.valueFormatter(row))
+          } else {
+            textArray.push(row[col.key].toString().trim().replace(/,/g, ''));
+          }
+        })
+        
+        return textArray.join(',')
+      }).join('\n')
+      const preparedColumns = `${exportableColumns.map(each => each.title.trim().replace(/,/g, '')).join(',')}\n`
+      
+      return `${preparedColumns}${preparedRows}`
+    },
+    toJson() {
+      const exportableColumns = this.columns.filter((each: Column) => each.exportable !== false && each)
+      
+      const exportableData = this.clonedRows.map((row: Row) => {
+        const exportableObject: Row = {};
+        
+        exportableColumns.forEach((col: Column) => {
+          if(col.valueFormatter) {
+            exportableObject[col.key] = col.valueFormatter(row)
+          } else {
+            exportableObject[col.key] = row[col.key];
+          }
+        })
+        
+        return exportableObject;
+      })
+
+      return JSON.stringify(exportableData);
+    },
+    download(text: string, fileName: string, fileType: 'csv' | 'json') {
+      const link = document.createElement('a');
+
+      link.setAttribute('href', `data:text/${fileType};charset=utf-8,${encodeURIComponent(text)}`);
+      link.setAttribute('download', `${fileName}.${fileType}`);
+
+      link.style.display = 'none';
+      document.body.appendChild(link);
+
+      link.click();
+
+      document.body.removeChild(link);
+    },
+    exportFile() {
+      let downloadableData: string = '';
+
+      if(this.tableConfig.download?.fileType === 'json') {
+        downloadableData = this.toJson()
+      } else {
+        downloadableData = this.toCsv(); 
+      }
+
+      this.download(
+        downloadableData, 
+        `${this.tableConfig.download?.fileName || 'download'}`, 
+        `${this.tableConfig.download?.fileType || 'csv'}`
+      );
     }
   }
 })

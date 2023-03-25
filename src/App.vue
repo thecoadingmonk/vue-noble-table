@@ -56,11 +56,6 @@ export default defineComponent({
       title: 'Category',
       sortable: true,
     },
-    {
-      key: 'thumbnail',
-      title: 'Thumbnail',
-      sortable: (a:string | number, b: string | number) => a === b ? 0 : a > b ? 1 : -1,
-    }
   ]);
     const rows = ref<Row[]>(ProductList.products);
     const columnGroups = ref<ColumnGroup[]>([
@@ -97,10 +92,18 @@ export default defineComponent({
 <template>
   <div class="table-container">
     <VueNobleTable 
+      id="exportMe"
       :columns="columns" 
       :rows="rows" 
       :column-groups="columnGroups" 
       :load-more="loadMore"
+      :table-config="{
+        download: {
+            enable: true,
+            fileType: 'json',
+            fileName: 'productList'
+          }
+        }"
     />
   </div>
 </template>

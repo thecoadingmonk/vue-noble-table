@@ -47,3 +47,11 @@ export interface Events {
       next: number, 
       cursor: number}) => Promise<Row[]>
 }
+
+export interface TableConfig {
+  download?: {
+    enable: boolean
+    fileType?: 'csv' | 'json'
+    fileName?: string
+  }
+}
