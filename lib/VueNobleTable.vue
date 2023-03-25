@@ -265,7 +265,6 @@ export default defineComponent({
         this.currentPage -= 1;
       } else if (page === 'next' && this.currentPage < this.totalPages) {
         this.currentPage += 1;
-        this.loadFromServer();
       }
     },
     async loadFromServer() {
